@@ -2,7 +2,7 @@ import numpy as np
 from numpy import sin, cos, pi
 
 
-def ode_system(t, y, Fr, Nb, mi, mo, wc, Ki, Ko, Kbh, Cbh, c):
+def ode_system(t, y, Fr, Nb, mi, mo, wc, Ki, Ko, Kbh, Cbh, c, D=0, L=0, phi_D0=0):
     xi, yi, xo, yo, dxi, dyi, dxo, dyo = y
     phi_0 = wc * t
     phi = phi_0 + np.arange(Nb) / Nb * 2 * pi

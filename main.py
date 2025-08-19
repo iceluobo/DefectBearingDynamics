@@ -24,7 +24,7 @@ def fft_trans(y, fs):
     return y_f, abs(y_ft[0:int(nfft / 2)])
 
 
-def healthy_bearing(save='False'):
+def healthy_bearing(savedata=False):
     filename = 'NUP205'
     Ki, Ko = load_K(filename)
     Nb = 13
@@ -55,20 +55,23 @@ def healthy_bearing(save='False'):
     plt.plot(t, signal)
     plt.ylim([-3, 3])
     plt.xlim([0.948, 0.964])
-    plt.savefig(f"{filename}/{filename}_t.png", dpi=300)
+    plt.savefig(f"{filename}/{filename}_t_healthy.png", dpi=300)
     plt.close()
-    plt.figure()
+    plt.figure(2)
     y_f, y_a = fft_trans(signal[int(0.2 * fs):], fs)
     plt.plot(y_f, y_a)
     plt.xlim([0, 1000])
     plt.ylim([0, 0.0011])
-    plt.savefig(f"{filename}/{filename}_f.png", dpi=300)
+    plt.savefig(f"{filename}/{filename}_f_healthy.png", dpi=300)
     plt.close()
-    if save:
-        data = pandas.DataFrame(y)
-        data.to_csv(f"{filename}/{filename}.csv", header=False, index=False)
+    if savedata:
+        data = np.zeros((4, fs * T))
+        for i in range(4):
+            data[i] = np.diff(y[4 + i, :]) * fs
+        data = pandas.DataFrame(data)
+        data.to_csv(f"{filename}/{filename}_healthy.csv", header=False, index=False)
 
 
 if __name__ == '__main__':
     matplotlib.use('TkAgg')
-    healthy_bearing()
+    healthy_bearing(savedata=True)
