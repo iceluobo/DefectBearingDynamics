@@ -2,20 +2,27 @@ import numpy as np
 from numpy import sin, cos, pi
 
 
-def ode_system(t, y, Fr, Nb, mi, mo, wc, Ki, Ko, Kbh, Cbh, c, dC=0, phi_Do=0, phi_oc=0):
+def ode_system(t, y, Fr, Nb, mi, mo, wc, Ki, Ko, Kbh, Cbh, c,
+               dC=0, phi_do=0, phi_oc=0,
+               dCi=0, phi_di=0, wi=0, phi_oci=0):
     xi, yi, xo, yo, dxi, dyi, dxo, dyo = y
     phi_0 = wc * t
     phi = phi_0 + np.arange(Nb) / Nb * 2 * pi
     phi = np.mod(phi, 2 * pi)
     # 外滚道故障位移激励控制
     Hdo = np.zeros_like(phi)
-    if dC != 0 and phi_Do != 0:
-        Hdo = Hdo_calculate(phi, dC, phi_Do, phi_oc)
+    if dC != 0 and phi_do != 0:
+        Hdo = Hdo_calculate(phi, dC, phi_do, phi_oc)
+    # 内滚道故障位移激励控制
+    Hdi = np.zeros_like(phi)
+    if dCi != 0 and phi_di != 0:
+        phi_id = wi * t + phi_oci
+        Hdi = Hdi_calculate(phi, dCi, phi_di, phi_id)
     # 非线性(故障)激励计算
-    delta = delta_calculate(xi, yi, xo, yo, phi, c, Hdo)
+    delta = delta_calculate(xi, yi, xo, yo, phi, c, Hdo, Hdi)
     fx, fy = contact_force(phi, delta, Ki, Ko)
-    ddxi = (-fx - xi) / mi
-    ddyi = (Fr - fy - yi) / mi
+    ddxi = (-fx) / mi
+    ddyi = (Fr - fy) / mi
     ddxo = (fx - Kbh * xo - Cbh * dxo) / mo
     ddyo = (fy - Kbh * yo - Cbh * dyo) / mo
     return [dxi, dyi, dxo, dyo, ddxi, ddyi, ddxo, ddyo]
@@ -23,12 +30,12 @@ def ode_system(t, y, Fr, Nb, mi, mo, wc, Ki, Ko, Kbh, Cbh, c, dC=0, phi_Do=0, ph
 
 def contact_force(phi, delta, Ki, Ko):
     fx = Ki * np.sum(delta ** (10 / 9) * np.cos(phi))
-    fy = Ko * np.sum(delta ** (10 / 9) * np.sin(phi))
+    fy = Ki * np.sum(delta ** (10 / 9) * np.sin(phi))
     return fx, fy
 
 
-def delta_calculate(xi, yi, xo, yo, phi, c, Hdo):
-    delta = (xi - xo) * cos(phi) + (yi - yo) * sin(phi) - c - Hdo
+def delta_calculate(xi, yi, xo, yo, phi, c, Hdo, Hdi):
+    delta = (xi - xo) * cos(phi) + (yi - yo) * sin(phi) - c - Hdo - Hdi
     delta = np.maximum(delta, 0)
     # delta_0 = (xi - xo) * cos(phi) + (yi - yo) * sin(phi) - c
     # delta_0 = np.maximum(delta_0, 0)
@@ -42,6 +49,15 @@ def Hdo_calculate(phi, dC, phi_do, phi_oc=0):
     mask = (np.abs(phi - phi_oc) <= phi_do)
     Hdo[mask] = dC * np.cos((phi[mask] - phi_oc) * np.pi / (2 * phi_do))
     return Hdo
+
+
+def Hdi_calculate(phi, dCi, phi_di, phi_id):
+    # 向量操作优化
+    Hdi = np.zeros_like(phi)
+    phi_i = np.mod(phi_id, 2 * pi)
+    mask = (np.abs(phi - phi_i) <= phi_di)
+    Hdi[mask] = dCi * np.cos((phi[mask]) * np.pi / (2 * phi_di))
+    return Hdi
 
 # 原版
 # def Hdo_calculate(dC, phi, phi_do, phi_oc):
