@@ -64,9 +64,11 @@ def healthy_bearing(savedata=False):
     y_f, y_a = fft_trans(signal[int(0.2 * fs):], fs)
     plt.plot(y_f, y_a)
     plt.xlim([0, 1000])
-    plt.ylim([0, 0.0011])
+    plt.ylim([0, 0.006])
     plt.savefig(f"{filename}/{filename}_f_healthy.png", dpi=300)
     plt.close()
+    # mplcursors.cursor()
+    # plt.show()
     if savedata:
         data = np.zeros((4, fs * T))
         for i in range(4):
@@ -216,9 +218,9 @@ def InnerDefect_bearing(savedata=False):
 if __name__ == '__main__':
     matplotlib.use('TkAgg')
 
-    # healthy_bearing(savedata=True)
-    # OuterDefect_bearing(savedata=True)
-    InnerDefect_bearing()
+    healthy_bearing(savedata=False)
+    # OuterDefect_bearing(savedata=False)
+    # InnerDefect_bearing()
 
 
 
