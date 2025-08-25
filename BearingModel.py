@@ -1,5 +1,6 @@
 import numpy as np
 from numpy import sin, cos, pi
+from sympy import zeros
 
 
 def ode_system(t, y,
@@ -47,6 +48,7 @@ def Hdo_calculate(phi, dC, phi_do, phi_oc=0):
     # 向量操作优化
     Hdo = np.zeros_like(phi)
     mask = (np.abs(phi - phi_oc) <= phi_do)
+    # mask = (cos(phi - phi_oc)) <= cos(phi_do)
     Hdo[mask] = dC * np.cos((phi[mask] - phi_oc) * np.pi / (2 * phi_do))
     return Hdo
 
@@ -59,17 +61,16 @@ def Hdi_calculate(phi, dCi, phi_di, phi_id):
     Hdi[mask] = dCi * np.cos((phi[mask] - phi_i) * np.pi / (2 * phi_di))
     return Hdi
 
-# 原版
-# def Hdo_calculate(dC, phi, phi_do, phi_oc):
-#     phi = np.atleast_1d(phi)
-#     Hdo = np.zeros_like(phi)
-#     for i in range(len(phi)):
-#         if phi[i] < phi_oc and phi[i] >= phi_oc - phi_do:
-#             Hdo[i] = dC * cos((phi[i] - phi_oc) * np.pi / 2 / phi_do)
-#         elif phi[i] == phi_oc:
-#             Hdo[i] = dC
-#         elif phi[i] >= phi_oc and phi[i] <= phi_oc + phi_do:
-#             Hdo[i] = dC * cos((phi[i] - phi_oc) * np.pi / 2 / phi_do)
-#         else:
-#             Hdo[i] = 0
-#     return Hdo
+
+def y_2_acc(t, y,
+            Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
+            dC=0, phi_do=0, phi_oc=0,
+            dCi=0, phi_di=0, phi_oci=0):
+    acc = np.zeros((4, y.shape[1]))
+    for i in range(y.shape[1]):
+        acc[:, i] = ode_system(t[i], y[:, i],
+                               Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
+                               dC, phi_do, phi_oc,
+                               dCi, phi_di, phi_oci)[4:8]
+    dy = np.vstack((y, acc))
+    return dy

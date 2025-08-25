@@ -7,6 +7,7 @@ from scipy import fft
 import BearingModel
 import matplotlib
 import mplcursors
+import dynamics_plot
 
 
 def load_K(filename):
@@ -19,22 +20,24 @@ def load_K(filename):
 
 def fft_trans(y, fs):
     # nfft = len(y)
+    # fs = int(fs)
     y = y - y.mean()
     nfft = 2 ** int(np.ceil(np.log2(len(y))))
+    # nfft = len(y)
     y = scipy.signal.hilbert(y)
     y_ft = fft.fft(y, nfft) / (nfft / 2)
     y_f = fs * np.arange(nfft // 2) / nfft
     return y_f, abs(y_ft[0:int(nfft / 2)])
 
 
-def healthy_bearing(savedata=False, fs=1e4, show=False, T=2):
+def healthy_bearing(fs=1e4, T=1):
     filename = 'NUP205'
     Ki, Ko = load_K(filename)
     Nb = 13
     mi = 5324.83e-9 * 7850
     mo = 7664.64e-9 * 7850
     Kbh = 1e7
-    Cbh = 1e2
+    Cbh = 1e3
     Fr = 500
     Rm = 19.5e-3
     Rr = 3.75e-3
@@ -51,59 +54,22 @@ def healthy_bearing(savedata=False, fs=1e4, show=False, T=2):
     #                dCi=0, phi_di=0, phi_oci=0):
     result = solve_ivp(BearingModel.ode_system, [0, T], y0, t_eval=t_span,
                        args=(Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c, 0, 0, 0, 0, 0, 0))
-    y = result.y
-    signal = y[5, :]
-    signal = np.diff(signal) * fs
-    t = np.linspace(0, T, len(signal))
-    plt.figure(1)
-    plt.plot(t, signal)
-    plt.ylim([-5, 5])
-    plt.xlim([0.948, 0.964])
-    plt.savefig(f"{filename}/{filename}_t_healthy.png", dpi=300)
-    if not show:
-        plt.close()
-    plt.figure(2)
-    y_f, y_a = fft_trans(signal[int(0.2 * fs):], fs)
-    plt.plot(y_f, y_a)
-    plt.xlim([0, 1000])
-    plt.ylim([0, 0.006])
-    plt.savefig(f"{filename}/{filename}_f_healthy.png", dpi=300)
-    if not show:
-        plt.close()
-    if show:
-        mplcursors.cursor()
-        plt.show()
-    if savedata:
-        data = np.zeros((4, fs * T))
-        for i in range(4):
-            data[i] = np.diff(y[4 + i, :]) * fs
-        data = pandas.DataFrame(data)
-        data.to_csv(f"{filename}/{filename}_healthy.csv", header=False, index=False)
+    dy = BearingModel.y_2_acc(result.t, result.y,
+                              Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c)
+    return result.t, dy
 
 
-def OuterDefect_bearing(savedata=False, fs=1e4, show=False, T=1):
+def OuterDefect_bearing(fs=1e4, T=1):
     filename = 'NUP205'
     Ki, Ko = load_K(filename)
     Nb = 13
     mi = 5324.83e-9 * 7850
     mo = 7664.64e-9 * 7850
     Kbh = 1e7
-    Cbh = 1e2
+    Cbh = 1e3
     Fr = 500
     Rm = 19.5e-3
     Rr = 3.75e-3
-    # filename = '6307'
-    # Ki, Ko = 1.89e10, 1.89e10
-    # Nb = 8
-    # mi = 1.2638
-    # mo = 12.638
-    # Kbh = 15e6
-    # Cbh = 2.2e3
-    # Fr = 2000
-    # Rm = 19.5e-3
-    # Rr = 3.75e-3
-    # Rm = 28.75e-3
-    # Rr = 7e-3
     c = 1e-6
     wi = 1000 / 60 * 2 * np.pi
     wc = wi / 2 * (1 - Rr / Rm)
@@ -129,8 +95,7 @@ def OuterDefect_bearing(savedata=False, fs=1e4, show=False, T=1):
     plt.plot(phi, Hdo)
     plt.savefig(f"{filename}/{filename}_Hdo.png", dpi=300)
     plt.xlabel('phi')
-    if not show:
-        plt.close()
+    plt.close()
     # def ode_system(t, y,
     #                Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
     #                dC=0, phi_do=0, phi_oc=0,
@@ -138,39 +103,13 @@ def OuterDefect_bearing(savedata=False, fs=1e4, show=False, T=1):
     result = solve_ivp(BearingModel.ode_system, [0, T], y0, t_eval=t_span,
                        args=(Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
                              dC, phi_do, phi_oc))
-    y = result.y
-    signal = y[5, :]
-    signal = np.diff(signal) * fs
-    t = np.linspace(0, T, len(signal))
-    plt.figure(2)
-    plt.plot(t, signal)
-    plt.ylim([-1500, 1500])
-    plt.xlim([0.5, 1])
-    plt.savefig(f"{filename}/{filename}_t_outer.png", dpi=300)
-    if not show:
-        plt.close()
-    plt.figure(3)
-    y_f, y_a = fft_trans(signal[int(0.4 * fs):], fs)
-    plt.plot(y_f, y_a)
-    plt.xlim([0, 1000])
-    plt.ylim([0, 0.05])
-    plt.savefig(f"{filename}/{filename}_f_outer.png", dpi=300)
-    if not show:
-        plt.close()
-    if show:
-        mplcursors.cursor()
-        plt.show()
-
-    if savedata:
-        data = np.zeros((4, fs * T))
-        for i in range(4):
-            data[i] = np.diff(y[4 + i, :]) * fs
-        data = pandas.DataFrame(data)
-        data.to_csv(f"{filename}/{filename}_outer.csv", header=False, index=False)
-    return t, signal
+    dy = BearingModel.y_2_acc(result.t, result.y,
+                              Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
+                              dC, phi_do, phi_oc)
+    return result.t, dy
 
 
-def InnerDefect_bearing(savedata=False, fs=1e4, show=False, T=1):
+def InnerDefect_bearing(fs=1e4, T=1):
     filename = 'NUP205'
     Ki, Ko = load_K(filename)
     Nb = 13
@@ -200,7 +139,7 @@ def InnerDefect_bearing(savedata=False, fs=1e4, show=False, T=1):
     phi_di = np.arcsin(B / 2 / Ri)
     phi_oci = 0
     # 角度-内滚道故障位移激励测试
-    t_test = np.linspace(0, T, T * fs + 1)
+    t_test = np.linspace(0, T, T * fs * 10 + 1)
     phi_i = t_test * wi + phi_oci
     phi_r = t_test * wc + 0
     Hdi = np.zeros_like(phi_i)
@@ -210,8 +149,8 @@ def InnerDefect_bearing(savedata=False, fs=1e4, show=False, T=1):
     plt.plot(t_test, Hdi)
     plt.savefig(f"{filename}/{filename}_Hdi.png", dpi=300)
     plt.xlabel('t (s)')
-    if not show:
-        plt.close()
+    plt.ylabel('Hdi (mm)')
+    plt.close()
     # def ode_system(t, y,
     #                Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
     #                dC=0, phi_do=0, phi_oc=0,
@@ -220,40 +159,22 @@ def InnerDefect_bearing(savedata=False, fs=1e4, show=False, T=1):
                        args=(Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
                              0, 0, 0,
                              dCi, phi_di, phi_oci))
-    y = result.y
-    signal = y[5, :]
-    signal = np.diff(signal) * fs
-    t = np.linspace(0, T, len(signal))
-    plt.figure(2)
-    plt.plot(t, signal)
-    plt.ylim([-4000, 4000])
-    plt.xlim([0.5, 1])
-    plt.savefig(f"{filename}/{filename}_t_inner.png", dpi=300)
-    if not show:
-        plt.close()
-    plt.figure(3)
-    y_f, y_a = fft_trans(signal[int(round(0.2 * fs)):], fs)
-    plt.plot(y_f, y_a)
-    plt.xlim([0, 1000])
-    plt.ylim([0, 0.04])
-    plt.savefig(f"{filename}/{filename}_f_inner.png", dpi=300)
-    if not show:
-        plt.close()
-    if show:
-        mplcursors.cursor()
-        plt.show()
-    if savedata:
-        data = np.zeros((4, fs * T))
-        for i in range(4):
-            data[i] = np.diff(y[4 + i, :]) * fs
-        data = pandas.DataFrame(data)
-        data.to_csv(f"{filename}/{filename}_inner.csv", header=False, index=False)
+    dy = BearingModel.y_2_acc(result.t, result.y,
+                              Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
+                              0, 0, 0,
+                              dCi, phi_di, phi_oci)
+    return result.t, dy
+
+
+def void_function():
+    pass
 
 
 if __name__ == '__main__':
     matplotlib.use('TkAgg')
     '''
     内圈转速: 1000 RPM
+    NUP205 理论频率分量
     转频：16.67 Hz
     变柔度频率: 87.5 Hz
     外圈故障特征频率: 87.5 Hz
@@ -261,6 +182,26 @@ if __name__ == '__main__':
     滚动体故障特征频率： 41.73 Hz
     保持架故障特征频率： 6.73 Hz
     '''
-    # healthy_bearing(savedata=False, show=True, T=2, fs=1e4)
-    # OuterDefect_bearing(savedata=False, show=True, T=2, fs=1e5)
-    InnerDefect_bearing(savedata=False, show=True, T=2, fs=1e5)
+    T = 1
+    fs = 1e5
+    # 健康轴承
+    t, y = healthy_bearing(fs=fs, T=T)
+    index = 11  # 5
+    signal = y[index, int(0.2 * fs):]
+    dynamics_plot.plt_time_domain(signal, fs, show=True, xlim=0.055,
+                                  img_save_path='NUP205/healthy_t.png', title='Healthy Bearing')
+    dynamics_plot.plt_envelope_spectrum(signal, fs, show=True, xlim=500,
+                                        img_save_path='NUP205/healthy_f.png', title='Healthy Bearing')
+
+    # 外圈故障
+    t, y = OuterDefect_bearing(fs=fs, T=T)
+    index = 11  # 5
+    signal = y[index, int(0.2 * fs):]
+    dynamics_plot.plt_time_domain(signal, fs, show=True, xlim=0.055,
+                                  img_save_path='NUP205/outerdefect_t.png', title='Outer Raceway Defected Bearing')
+    dynamics_plot.plt_envelope_spectrum(signal, fs, show=True, xlim=500,
+                                        img_save_path='NUP205/outerdefect_f.png',
+                                        title='Outer Raceway Defected Bearing')
+
+    # 内圈故障
+    # t, y = InnerDefect_bearing(fs=fs, T=T)
