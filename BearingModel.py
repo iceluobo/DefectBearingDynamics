@@ -2,9 +2,10 @@ import numpy as np
 from numpy import sin, cos, pi
 
 
-def ode_system(t, y, Fr, Nb, mi, mo, wc, Ki, Ko, Kbh, Cbh, c,
+def ode_system(t, y,
+               Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
                dC=0, phi_do=0, phi_oc=0,
-               dCi=0, phi_di=0, wi=0, phi_oci=0):
+               dCi=0, phi_di=0, phi_oci=0):
     xi, yi, xo, yo, dxi, dyi, dxo, dyo = y
     phi_0 = wc * t
     phi = phi_0 + np.arange(Nb) / Nb * 2 * pi
@@ -18,6 +19,8 @@ def ode_system(t, y, Fr, Nb, mi, mo, wc, Ki, Ko, Kbh, Cbh, c,
     if dCi != 0 and phi_di != 0:
         phi_id = wi * t + phi_oci
         Hdi = Hdi_calculate(phi, dCi, phi_di, phi_id)
+    # 滚子故障位移激励控制
+
     # 非线性(故障)激励计算
     delta = delta_calculate(xi, yi, xo, yo, phi, c, Hdo, Hdi)
     fx, fy = contact_force(phi, delta, Ki, Ko)
@@ -29,17 +32,14 @@ def ode_system(t, y, Fr, Nb, mi, mo, wc, Ki, Ko, Kbh, Cbh, c,
 
 
 def contact_force(phi, delta, Ki, Ko):
-    fx = Ki * np.sum(delta ** (10 / 9) * np.cos(phi))
-    fy = Ki * np.sum(delta ** (10 / 9) * np.sin(phi))
+    fx = Ki * np.sum(delta ** (10 / 9) @ np.cos(phi))
+    fy = Ki * np.sum(delta ** (10 / 9) @ np.sin(phi))
     return fx, fy
 
 
 def delta_calculate(xi, yi, xo, yo, phi, c, Hdo, Hdi):
-    delta = (xi - xo) * cos(phi) + (yi - yo) * sin(phi) - c - Hdo - Hdi
+    delta = (xi - xo) * cos(phi) + (yi - yo) * sin(phi) - c / 2 - Hdo - Hdi
     delta = np.maximum(delta, 0)
-    # delta_0 = (xi - xo) * cos(phi) + (yi - yo) * sin(phi) - c
-    # delta_0 = np.maximum(delta_0, 0)
-    # print(delta_0,'\n',Hdo,'\n')
     return delta
 
 
@@ -54,9 +54,9 @@ def Hdo_calculate(phi, dC, phi_do, phi_oc=0):
 def Hdi_calculate(phi, dCi, phi_di, phi_id):
     # 向量操作优化
     Hdi = np.zeros_like(phi)
-    phi_i = np.mod(phi_id, 2 * pi)
+    phi_i = np.mod(phi_id, 2 * pi)  # 内圈故障中心角度位置
     mask = (np.abs(phi - phi_i) <= phi_di)
-    Hdi[mask] = dCi * np.cos((phi[mask]) * np.pi / (2 * phi_di))
+    Hdi[mask] = dCi * np.cos((phi[mask] - phi_i) * np.pi / (2 * phi_di))
     return Hdi
 
 # 原版
