@@ -8,7 +8,7 @@ import BearingModel
 import matplotlib
 import mplcursors
 import dynamics_plot
-
+import time
 
 def load_K(filename):
     with open(f"{filename}.txt", "r") as f:
@@ -136,19 +136,19 @@ def InnerDefect_bearing(fs=1e5, T=1):
     dCi = Cd - Ci
     phi_di = np.arcsin(B / 2 / Ri)
     phi_oci = 0
-    # 角度-内滚道故障位移激励测试
-    t_test = np.linspace(0, T, T * fs * 10 + 1)
-    phi_i = t_test * wi + phi_oci
-    phi_r = t_test * wc + 0
-    Hdi = np.zeros_like(phi_i)
-    for i in range(len(t_test)):
-        Hdi[i] = BearingModel.Hdi_calculate(np.mod(phi_r[i], 2 * np.pi), dCi, phi_di, np.mod(phi_i[i], 2 * np.pi))
-    plt.figure(1)
-    plt.plot(t_test, Hdi)
-    plt.savefig(f"{filename}/{filename}_Hdi.png", dpi=300)
-    plt.xlabel('t (s)')
-    plt.ylabel('Hdi (mm)')
-    plt.close()
+    # 角度-内滚道故障位移激励测试 @njit后类型警告，导致无法正确运行
+    # t_test = np.linspace(0, T, T * fs * 10 + 1)
+    # phi_i = t_test * wi + phi_oci
+    # phi_r = t_test * wc + 0
+    # Hdi = np.zeros_like(phi_i)
+    # for i in range(len(t_test)):
+    #     Hdi[i] = BearingModel.Hdi_calculate(np.mod(phi_r[i], 2 * np.pi), dCi, phi_di, np.mod(phi_i[i], 2 * np.pi))
+    # plt.figure(1)
+    # plt.plot(t_test, Hdi)
+    # plt.savefig(f"{filename}/{filename}_Hdi.png", dpi=300)
+    # plt.xlabel('t (s)')
+    # plt.ylabel('Hdi (mm)')
+    # plt.close()
     # def ode_system(t, y,
     #                Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
     #                dC=0, phi_do=0, phi_oc=0,
@@ -186,24 +186,25 @@ if __name__ == '__main__':
     '''
     T = 2
     fs = 1e5
+    start = time.time()
     # 健康轴承 频率分量：fvc
-    t, y = healthy_bearing(fs=fs, T=T)
-    index = 11  # 5
-    signal = y[index, int(0.2 * fs):]
-    dynamics_plot.plt_time_domain(signal, fs, show=False, xlim=0.055,
-                                  img_save_path='NUP205/healthy_t.png', title='Healthy Bearing')
-    dynamics_plot.plt_envelope_spectrum(signal, fs, show=False, xlim=500,
-                                        img_save_path='NUP205/healthy_f.png', title='Healthy Bearing')
+    # t, y = healthy_bearing(fs=fs, T=T)
+    # index = 11  # 5
+    # signal = y[index, int(0.2 * fs):]
+    # dynamics_plot.plt_time_domain(signal, fs, show=False, xlim=0.055,
+    #                               img_save_path='NUP205/healthy_t.png', title='Healthy Bearing')
+    # dynamics_plot.plt_envelope_spectrum(signal, fs, show=False, xlim=500,
+    #                                     img_save_path='NUP205/healthy_f.png', title='Healthy Bearing')
 
     # 外圈故障 频率分量：n * fbpfo
-    t, y = OuterDefect_bearing(fs=fs, T=T)
-    index = 11  # 5
-    signal = y[index, int(0.2 * fs):]
-    dynamics_plot.plt_time_domain(signal, fs, show=False, xlim=0.055,
-                                  img_save_path='NUP205/outerdefect_t.png', title='Outer Raceway Defected Bearing')
-    dynamics_plot.plt_envelope_spectrum(signal, fs, show=False, xlim=500,
-                                        img_save_path='NUP205/outerdefect_f.png',
-                                        title='Outer Raceway Defected Bearing')
+    # t, y = OuterDefect_bearing(fs=fs, T=T)
+    # index = 11  # 5
+    # signal = y[index, int(0.2 * fs):]
+    # dynamics_plot.plt_time_domain(signal, fs, show=False, xlim=0.055,
+    #                               img_save_path='NUP205/outerdefect_t.png', title='Outer Raceway Defected Bearing')
+    # dynamics_plot.plt_envelope_spectrum(signal, fs, show=False, xlim=500,
+    #                                     img_save_path='NUP205/outerdefect_f.png',
+    #                                     title='Outer Raceway Defected Bearing')
 
     # 内圈故障 频率分量：n * fi, n * fbpfi +- m * fi
     t, y = InnerDefect_bearing(fs=fs, T=T)
@@ -216,3 +217,9 @@ if __name__ == '__main__':
                                         title='Inner Raceway Defected Bearing')
 
     # 滚动体故障 频率分量：n * fc, n * fbsf +- m * fc
+
+    end = time.time()
+    elapsed = end - start  # 秒
+    minutes = int(elapsed // 60)
+    seconds = elapsed % 60
+    print(f"运行时间: {minutes} 分 {seconds:.2f} 秒")

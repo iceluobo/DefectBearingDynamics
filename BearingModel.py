@@ -4,6 +4,7 @@ from sympy import zeros
 from numba import njit
 
 
+@njit
 def ode_system(t, y,
                Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
                dC=0, phi_do=0, phi_oc=0,
@@ -22,7 +23,7 @@ def ode_system(t, y,
         phi_id = wi * t + phi_oci
         Hdi = Hdi_calculate(phi, dCi, phi_di, phi_id)
     # 滚子故障位移激励控制
-
+    Hdr = np.zeros_like(phi)
     # 非线性(故障)激励计算
     delta = delta_calculate(xi, yi, xo, yo, phi, c, Hdo, Hdi)
     fx, fy = contact_force(phi, delta, Ki, Ko)
@@ -33,18 +34,21 @@ def ode_system(t, y,
     return [dxi, dyi, dxo, dyo, ddxi, ddyi, ddxo, ddyo]
 
 
+@njit
 def contact_force(phi, delta, Ki, Ko):
-    fx = Ki * np.sum(delta ** (10 / 9) @ np.cos(phi))
-    fy = Ki * np.sum(delta ** (10 / 9) @ np.sin(phi))
+    fx = Ki * np.sum(delta ** (10 / 9) * np.cos(phi))
+    fy = Ki * np.sum(delta ** (10 / 9) * np.sin(phi))
     return fx, fy
 
 
+@njit
 def delta_calculate(xi, yi, xo, yo, phi, c, Hdo, Hdi):
     delta = (xi - xo) * cos(phi) + (yi - yo) * sin(phi) - c / 2 - Hdo - Hdi
     delta = np.maximum(delta, 0)
     return delta
 
 
+@njit
 def Hdo_calculate(phi, dC, phi_do, phi_oc=0):
     Hdo = np.zeros_like(phi)
     mask = (np.abs(phi - phi_oc) <= phi_do)
@@ -52,6 +56,7 @@ def Hdo_calculate(phi, dC, phi_do, phi_oc=0):
     return Hdo
 
 
+@njit
 def Hdi_calculate(phi, dCi, phi_di, phi_id):
     Hdi = np.zeros_like(phi)
     phi_i = np.mod(phi_id, 2 * pi)  # 内圈故障中心角度位置
@@ -60,6 +65,7 @@ def Hdi_calculate(phi, dCi, phi_di, phi_id):
     return Hdi
 
 
+@njit
 def y_2_acc(t, y,
             Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
             dC=0, phi_do=0, phi_oc=0,
