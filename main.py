@@ -19,12 +19,10 @@ def load_K(filename):
 
 
 def fft_trans(y, fs):
-    # nfft = len(y)
-    # fs = int(fs)
-    y = y - y.mean()
+    fs = int(fs)
     nfft = 2 ** int(np.ceil(np.log2(len(y))))
-    # nfft = len(y)
-    y = scipy.signal.hilbert(y)
+    y = np.abs(scipy.signal.hilbert(y))
+    y = y - y.mean()
     y_ft = fft.fft(y, nfft) / (nfft / 2)
     y_f = fs * np.arange(nfft // 2) / nfft
     return y_f, abs(y_ft[0:int(nfft / 2)])
@@ -59,7 +57,7 @@ def healthy_bearing(fs=1e4, T=1):
     return result.t, dy
 
 
-def OuterDefect_bearing(fs=1e4, T=1):
+def OuterDefect_bearing(fs=1e5, T=1):
     filename = 'NUP205'
     Ki, Ko = load_K(filename)
     Nb = 13
@@ -109,7 +107,7 @@ def OuterDefect_bearing(fs=1e4, T=1):
     return result.t, dy
 
 
-def InnerDefect_bearing(fs=1e4, T=1):
+def InnerDefect_bearing(fs=1e5, T=1):
     filename = 'NUP205'
     Ki, Ko = load_K(filename)
     Nb = 13
@@ -166,6 +164,10 @@ def InnerDefect_bearing(fs=1e4, T=1):
     return result.t, dy
 
 
+def RollerDefect(fs=1e5, T=1):
+    pass
+
+
 def void_function():
     pass
 
@@ -175,33 +177,42 @@ if __name__ == '__main__':
     '''
     内圈转速: 1000 RPM
     NUP205 理论频率分量
-    转频：16.67 Hz
-    变柔度频率: 87.5 Hz
-    外圈故障特征频率: 87.5 Hz
-    内圈故障特征频率: 129.17 Hz
-    滚动体故障特征频率： 41.73 Hz
-    保持架故障特征频率： 6.73 Hz
+    转频 fi：16.67 Hz
+    变柔度频率 fvc: 87.5 Hz
+    外圈故障特征频率 fbpfo: 87.5 Hz
+    内圈故障特征频率 fbpfi: 129.17 Hz
+    滚动体故障特征频率 fbsf： 41.73 Hz
+    保持架故障特征频率 fc： 6.73 Hz
     '''
-    T = 1
+    T = 2
     fs = 1e5
-    # 健康轴承
+    # 健康轴承 频率分量：fvc
     t, y = healthy_bearing(fs=fs, T=T)
     index = 11  # 5
     signal = y[index, int(0.2 * fs):]
-    dynamics_plot.plt_time_domain(signal, fs, show=True, xlim=0.055,
+    dynamics_plot.plt_time_domain(signal, fs, show=False, xlim=0.055,
                                   img_save_path='NUP205/healthy_t.png', title='Healthy Bearing')
-    dynamics_plot.plt_envelope_spectrum(signal, fs, show=True, xlim=500,
+    dynamics_plot.plt_envelope_spectrum(signal, fs, show=False, xlim=500,
                                         img_save_path='NUP205/healthy_f.png', title='Healthy Bearing')
 
-    # 外圈故障
+    # 外圈故障 频率分量：n * fbpfo
     t, y = OuterDefect_bearing(fs=fs, T=T)
     index = 11  # 5
     signal = y[index, int(0.2 * fs):]
-    dynamics_plot.plt_time_domain(signal, fs, show=True, xlim=0.055,
+    dynamics_plot.plt_time_domain(signal, fs, show=False, xlim=0.055,
                                   img_save_path='NUP205/outerdefect_t.png', title='Outer Raceway Defected Bearing')
-    dynamics_plot.plt_envelope_spectrum(signal, fs, show=True, xlim=500,
+    dynamics_plot.plt_envelope_spectrum(signal, fs, show=False, xlim=500,
                                         img_save_path='NUP205/outerdefect_f.png',
                                         title='Outer Raceway Defected Bearing')
 
-    # 内圈故障
-    # t, y = InnerDefect_bearing(fs=fs, T=T)
+    # 内圈故障 频率分量：n * fi, n * fbpfi +- m * fi
+    t, y = InnerDefect_bearing(fs=fs, T=T)
+    index = 11  # 5
+    signal = y[index, int(0.2 * fs):]
+    dynamics_plot.plt_time_domain(signal, fs, show=False, xlim=0.31,
+                                  img_save_path='NUP205/innerdefect_t.png', title='Inner Raceway Defected Bearing')
+    dynamics_plot.plt_envelope_spectrum(signal, fs, show=False, xlim=500,
+                                        img_save_path='NUP205/innerdefect_f.png',
+                                        title='Inner Raceway Defected Bearing')
+
+    # 滚动体故障 频率分量：n * fc, n * fbsf +- m * fc

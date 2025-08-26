@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy
 import mplcursors
+
 '''
 https://mp.weixin.qq.com/s?__biz=MzkzNDI1MjA4Ng==&mid=2247508372&idx=1&sn=ce0d8d44db45103cb371e10c4b726441&chksm=c307e94c9cc115ef9d086660767e2faadd0b70983018e3f3c9e8cc3d0ce55f96f7082553a69a&mpshare=1&scene=1&srcid=0825S24tMrEojkvMzxYSKWd6&sharer_shareinfo=e1c6e091fa32a8febaca60336ca3cb70&sharer_shareinfo_first=e1c6e091fa32a8febaca60336ca3cb70&key=daf9bdc5abc4e8d096cad01d2213dc27f79325aa19a62e8a092d21bbe0821211923e95bd8661f7cb5f345c2e3e47349741648fcad91d0fc792fdda4496b656eb6c04c761371fec058da9a2b92793fc4cafe17fe75b31ad225ece1881075614435f8ac707d61e9a0b9bd3a32b6d1bda0749833e0785e215d5468f317135321161&ascene=0&uin=MTQ2MTczMDI2&devicetype=UnifiedPCWindows&version=f254061a&lang=zh_CN&countrycode=CN&exportkey=n_ChQIAhIQVzb8qbnnbgdJAdAmtrBbjRLnAQIE97dBBAEAAAAAABs6AtwjcooAAAAOpnltbLcz9gKNyK89dVj07mYVLR1nLAc30aCQdh%2BQPbKNWshQHDfcLJ4gxUfzxSJ62zb%2B%2BkFPivWQVKaMUX%2FvWcL4Rg1BcZVeEuDWzv2K2F%2B3%2BDDBe3Uw82f9owCmHtsdTwxubMHo64JONEPOBGgVzaJCJgLbyGracpV645LBO5cvJZXGye18sbzUL%2FJJ7oMj2Y%2BCh%2BMafAaKw5hdURC0S5g7aj3%2BrYfKBvD6I2118XwlEBEHLKcF9qmDy5AFHeDU6JbSNZ0fbiyf%2FUkTSJW%2Bfw%3D%3D&acctmode=0&pass_ticket=cqEoyGz2xqfrko1WZANh93ao5KrGA1i9k47piGtwY9j%2FoXn8geCHJw%2FgL5Zcep53&wx_header=0
 '''
@@ -9,7 +10,7 @@ https://mp.weixin.qq.com/s?__biz=MzkzNDI1MjA4Ng==&mid=2247508372&idx=1&sn=ce0d8d
 
 def plt_time_domain(arr, fs, ylabel='Amp (m/s^2)',
                     title='Data in time-domain', img_save_path=None,
-                    x_vline=None, y_hline=None, xlim = None,
+                    x_vline=None, y_hline=None, xlim=None,
                     show=True):
     """
     :fun: 绘制时域图模板
@@ -31,7 +32,7 @@ def plt_time_domain(arr, fs, ylabel='Amp (m/s^2)',
     plt.xlabel('t(s)')
     plt.ylabel(ylabel)
     plt.title(title)
-    mplcursors.cursor(multiple = True)
+    mplcursors.cursor(multiple=True)
     if xlim:
         plt.xlim(0, xlim)
     if x_vline:
@@ -43,6 +44,8 @@ def plt_time_domain(arr, fs, ylabel='Amp (m/s^2)',
         plt.savefig(img_save_path, dpi=500, bbox_inches='tight')
     if show:
         plt.show(block=True)
+    elif not show:
+        plt.close()
 
 
 ##========绘制频域信号图========##
@@ -80,9 +83,11 @@ def plt_fft_img(arr, fs, ylabel='Amp (m/s^2)', title='Data in frequency-domain',
     if xlim:  # 图片横坐标是否设置xlim
         plt.xlim(0, xlim)
     plt.tight_layout()
-    mplcursors.cursor(multiple = True)
+    mplcursors.cursor(multiple=True)
     if show:
         plt.show(block=True)
+    elif not show:
+        plt.close()
     return fft_freq, fft_amp
 
 
@@ -126,16 +131,8 @@ def plt_envelope_spectrum(data, fs, ylabel='Amp (m/s^2)', title='Envelope Spectr
     if img_save_path:
         plt.savefig(img_save_path, dpi=500, bbox_inches='tight')
     plt.tight_layout()
-    mplcursors.cursor(multiple = True)
+    mplcursors.cursor(multiple=True)
     if show:
         plt.show(block=True)
-
-
-def fft_trans(y, fs):
-    y = y - y.mean()
-    nfft = 2 ** int(np.ceil(np.log2(len(y))))
-    # nfft = len(y)
-    y = scipy.signal.hilbert(y)
-    y_ft = scipy.fft.fft(y, nfft) / (nfft / 2)
-    y_f = fs * np.arange(nfft // 2) / nfft
-    return y_f, abs(y_ft[0:int(nfft / 2)])
+    elif not show:
+        plt.close()

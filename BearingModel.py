@@ -1,6 +1,7 @@
 import numpy as np
 from numpy import sin, cos, pi
 from sympy import zeros
+from numba import njit
 
 
 def ode_system(t, y,
@@ -45,16 +46,13 @@ def delta_calculate(xi, yi, xo, yo, phi, c, Hdo, Hdi):
 
 
 def Hdo_calculate(phi, dC, phi_do, phi_oc=0):
-    # 向量操作优化
     Hdo = np.zeros_like(phi)
     mask = (np.abs(phi - phi_oc) <= phi_do)
-    # mask = (cos(phi - phi_oc)) <= cos(phi_do)
     Hdo[mask] = dC * np.cos((phi[mask] - phi_oc) * np.pi / (2 * phi_do))
     return Hdo
 
 
 def Hdi_calculate(phi, dCi, phi_di, phi_id):
-    # 向量操作优化
     Hdi = np.zeros_like(phi)
     phi_i = np.mod(phi_id, 2 * pi)  # 内圈故障中心角度位置
     mask = (np.abs(phi - phi_i) <= phi_di)
