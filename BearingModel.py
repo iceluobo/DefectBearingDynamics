@@ -8,7 +8,8 @@ from numba import njit
 def ode_system(t, y,
                Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
                dC=0, phi_do=0, phi_oc=0,
-               dCi=0, phi_di=0, phi_oci=0):
+               dCi=0, phi_di=0, phi_oci=0,
+               Hbomax=0, Hbimax=0, phi_b=0, wr=0, alpha_b=0, j=1):
     xi, yi, xo, yo, dxi, dyi, dxo, dyo = y
     phi_0 = wc * t
     phi = phi_0 + np.arange(Nb) / Nb * 2 * pi
@@ -24,8 +25,12 @@ def ode_system(t, y,
         Hdi = Hdi_calculate(phi, dCi, phi_di, phi_id)
     # 滚子故障位移激励控制
     Hdr = np.zeros_like(phi)
+    if Hbomax != 0 and Hbimax != 0 and wr != 0 and phi_b != 0:
+        beta = wr * t + 2 * pi * (j - 1) / Nb + alpha_b
+        beta = np.mod(beta, 2 * pi)
+        Hdr = Hdr_calculate(beta, Hbomax, Hbimax, phi_b, j, Nb)
     # 非线性(故障)激励计算
-    delta = delta_calculate(xi, yi, xo, yo, phi, c, Hdo, Hdi)
+    delta = delta_calculate(xi, yi, xo, yo, phi, c, Hdo, Hdi, Hdr)
     fx, fy = contact_force(phi, delta, Ki, Ko)
     ddxi = (-fx) / mi
     ddyi = (Fr - fy) / mi
@@ -42,8 +47,8 @@ def contact_force(phi, delta, Ki, Ko):
 
 
 @njit
-def delta_calculate(xi, yi, xo, yo, phi, c, Hdo, Hdi):
-    delta = (xi - xo) * cos(phi) + (yi - yo) * sin(phi) - c / 2 - Hdo - Hdi
+def delta_calculate(xi, yi, xo, yo, phi, c, Hdo, Hdi, Hdr):
+    delta = (xi - xo) * cos(phi) + (yi - yo) * sin(phi) - c / 2 - Hdo - Hdi - Hdr
     delta = np.maximum(delta, 0)
     return delta
 
@@ -66,15 +71,27 @@ def Hdi_calculate(phi, dCi, phi_di, phi_id):
 
 
 @njit
+def Hdr_calculate(beta, Hbomax, Hbimax, phi_b, j, Nb):
+    Hdr = np.zeros(Nb)
+    if np.abs(beta) <= phi_b:
+        Hdr[j - 1] = Hbomax
+    elif np.abs(beta - pi) <= phi_b:
+        Hdr[j - 1] = Hbimax
+    return Hdr
+
+
+@njit
 def y_2_acc(t, y,
             Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
             dC=0, phi_do=0, phi_oc=0,
-            dCi=0, phi_di=0, phi_oci=0):
+            dCi=0, phi_di=0, phi_oci=0,
+            Hbomax=0, Hbimax=0, phi_b=0, wr=0, alpha_b=0, j=1):
     acc = np.zeros((4, y.shape[1]))
     for i in range(y.shape[1]):
         acc[:, i] = ode_system(t[i], y[:, i],
                                Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
                                dC, phi_do, phi_oc,
-                               dCi, phi_di, phi_oci)[4:8]
+                               dCi, phi_di, phi_oci,
+                               Hbomax, Hbimax, phi_b, wr, alpha_b, j)[4:8]
     dy = np.vstack((y, acc))
     return dy

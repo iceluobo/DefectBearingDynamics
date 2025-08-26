@@ -54,6 +54,7 @@ def calculate(R1, R2, Rr, E, v, l, Q, filename):
     plt.savefig(filename + '.pdf', dpi=300)
     return const_i, const_o
 
+
 def save_K(Ki, Ko, filename):
     with open(f"{filename}.txt", "w") as f:
         f.write(f"{int(Ki[0].item())}\n")
@@ -62,14 +63,26 @@ def save_K(Ki, Ko, filename):
 
 if __name__ == '__main__':
     matplotlib.use('TkAgg')
-    R1 = 15.75e-3
-    R2 = 23.25e-3
-    Rr = 3.75e-3
+    # R1 = 15.75e-3
+    # R2 = 23.25e-3
+    # Rr = 3.75e-3
+    # E = 2.1e11
+    # v = 0.3
+    # l = 9e-3
+    # Q = np.linspace(0, 3000, 3001)
+    # filename = 'NUP205'
+    # Ki, Ko = calculate(R1, R2, Rr, E, v, l, Q, filename)
+    # save_K(Ki, Ko, filename)
+
+    Rr = 11e-3 / 2
+    Rm = 60.5e-3 / 2
+    R1 = Rm - Rr
+    R2 = Rm + Rr
+
     E = 2.1e11
     v = 0.3
-    l = 9e-3
+    l = 11e-3
     Q = np.linspace(0, 3000, 3001)
-    filename = 'NUP205'
+    filename = 'NJ208'
     Ki, Ko = calculate(R1, R2, Rr, E, v, l, Q, filename)
-    save_K(Ki,Ko,filename)
-
+    save_K(Ki, Ko, filename)
