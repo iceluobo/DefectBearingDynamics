@@ -24,7 +24,7 @@ def ode_system(t, y,
         Hdi = Hdi_calculate(phi, dCi, phi_di, phi_id)
     # 滚子故障位移激励控制
     Hdr = np.zeros_like(phi)
-    if Hbomax != 0 and Hbimax != 0 and wr != 0 and phi_b != 0:
+    if Hbomax != 0 and Hbimax != 0:
         beta = wr * t + 2 * pi * (j - 1) / Nb + alpha_b
         beta = np.mod(beta, 2 * pi)
         Hdr = Hdr_calculate(beta, Hbomax, Hbimax, phi_b, j, Nb)
