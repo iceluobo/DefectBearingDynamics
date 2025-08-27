@@ -56,8 +56,8 @@ def Dynamics_bearing(fs=1e5, T=1, **kwargs):
     params = dict(
         filename='NJ208',
         Nb=14,
-        mi=12979.79e-9 * 7850 + 5,
-        mo=21201.94e-9 * 7850 + 5,
+        mi=12979.79e-9 * 7850,
+        mo=21201.94e-9 * 7850,
         Kbh=1e7,
         Cbh=1e3,
         Fr=500,
@@ -79,6 +79,7 @@ def Dynamics_bearing(fs=1e5, T=1, **kwargs):
     model = []
     params.update(kwargs)
     Ki, Ko = load_K(params['filename'])
+    Ke = (1 / ((1 / Ki) ** (2 / 3) + (1 / Ko) ** (2 / 3))) ** (3 / 2)
     wi = params['RPM'] / 60 * 2 * np.pi
     wc = wi / 2 * (1 - params['Rr'] / params['Rm'])
     wr = wi * params['Rm'] / 2 / params['Rr'] * (1 - (params['Rr'] / params['Rm']) ** 2)
@@ -123,7 +124,7 @@ def Dynamics_bearing(fs=1e5, T=1, **kwargs):
         BearingModel.ode_system,
         [0, T], y0, t_eval=t_span,
         args=(params['Fr'], params['Nb'], params['mi'], params['mo'],
-              wi, wc, Ki, Ko, params['Kbh'], params['Cbh'], params['c'],
+              wi, wc, Ke, Ke, params['Kbh'], params['Cbh'], params['c'],
               dC, phi_do, params['phi_oc'],
               dCi, phi_di, params['phi_oci'],
               Hbomax, Hbimax, phi_b, wr, params['alpha_b'], params['j'])
@@ -131,9 +132,9 @@ def Dynamics_bearing(fs=1e5, T=1, **kwargs):
     dy = BearingModel.y_2_acc(
         result.t, result.y,
         params['Fr'], params['Nb'], params['mi'], params['mo'],
-        wi, wc, Ki, Ko, params['Kbh'], params['Cbh'], params['c'],
-        0, 0, 0,
-        0, 0, 0,
+        wi, wc, Ke, Ke, params['Kbh'], params['Cbh'], params['c'],
+        dC, phi_do, params['phi_oc'],
+        dCi, phi_di, params['phi_oci'],
         Hbomax, Hbimax, phi_b, wr, params['alpha_b'], params['j']
     )
     if not model:
@@ -149,12 +150,12 @@ if __name__ == '__main__':
     filename = 'NJ208'
     # 计算
     # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename) # 健康
-    t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename, Bo=0.2e-3, phi_oc=np.pi / 2)  # 外
-    # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename, Bi=0.1e-3, phi_oci=0)  # 内
-    # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename, Br=2e-3, alpha_b=0, j=1) # 滚
-    # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename,
-    #                                Bo=0.1e-3, phi_oc=np.pi / 2,
-    #                                Bi=0.1e-3, phi_oci=0)  # 外+内复合
+    # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename, Bo=0.2e-3, phi_oc=np.pi / 2)  # 外
+    # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename, Bi=0.2e-3, phi_oci=0)  # 内
+    # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename, Br=0.2e-3, alpha_b=0, j=1) # 滚
+    t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename,
+                                   Bo=0.1e-3, phi_oc=np.pi / 2,
+                                   Bi=0.1e-3, phi_oci=0)  # 外+内复合
     model = '_'.join(model)
     index = 11  # 5
     signal = y[index, int(0.2 * fs):]
@@ -170,3 +171,7 @@ if __name__ == '__main__':
     minutes = int(elapsed // 60)
     seconds = elapsed % 60
     print(f"运行时间: {minutes} 分 {seconds:.2f} 秒")
+    data = pandas.DataFrame(y[8:12, int(0.2 * fs):])
+    data.to_csv(f"{filename}/DATA_{model}.csv", index=False, header=False)
+    # 每一行分别为xi,yi,xo,yo通道的振动加速度
+    print(f'数据保存至{filename}下对应csv文件')
