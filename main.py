@@ -2,13 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy
 from scipy.integrate import solve_ivp
-import pandas
 from scipy import fft
 import BearingModel
 import matplotlib
-import mplcursors
 import dynamics_plot
 import time
+import pandas
+import mplcursors
 
 
 def load_K(filename):
@@ -29,198 +29,207 @@ def fft_trans(y, fs):
     return y_f, abs(y_ft[0:int(nfft / 2)])
 
 
-def healthy_bearing(fs=1e4, T=1):
-    filename = 'NUP205'
-    Ki, Ko = load_K(filename)
-    Nb = 13
-    mi = 5324.83e-9 * 7850
-    mo = 7664.64e-9 * 7850
-    Kbh = 1e7
-    Cbh = 1e3
-    Fr = 500
-    Rm = 19.5e-3
-    Rr = 3.75e-3
-    c = 1e-6
-    wi = 1000 / 60 * 2 * np.pi
-    wc = wi / 2 * (1 - Rr / Rm)
+def healthy_bearing(fs=1e4, T=1, **kwargs):
+    params = dict(
+        filename='NUP205',
+        Nb=13,
+        mi=5324.83e-9 * 7850,
+        mo=7664.64e-9 * 7850,
+        Kbh=1e7,
+        Cbh=1e3,
+        Fr=500,
+        RPM=1000,
+        Rm=19.5e-3,
+        Rr=3.75e-3,
+        c=1e-6
+    )
+    params.update(kwargs)
+    Ki, Ko = load_K(params["filename"])
+    wi = params["RPM"] / 60 * 2 * np.pi
+    wc = wi / 2 * (1 - params["Rr"] / params["Rm"])
     fs = int(fs)
     t_span = np.linspace(0, T, T * fs + 1)
     DOF = 4
     y0 = np.zeros(DOF * 2)
-    # def ode_system(t, y,
-    #                Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
-    #                dC=0, phi_do=0, phi_oc=0,
-    #                dCi=0, phi_di=0, phi_oci=0):
-    result = solve_ivp(BearingModel.ode_system, [0, T], y0, t_eval=t_span,
-                       args=(Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c, 0, 0, 0, 0, 0, 0))
-    dy = BearingModel.y_2_acc(result.t, result.y,
-                              Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c)
+    result = solve_ivp(
+        BearingModel.ode_system,
+        [0, T], y0, t_eval=t_span,
+        args=(params["Fr"], params["Nb"], params["mi"], params["mo"],
+              wi, wc, Ki, Ko, params["Kbh"], params["Cbh"], params["c"])
+    )
+    dy = BearingModel.y_2_acc(
+        result.t, result.y,
+        params["Fr"], params["Nb"], params["mi"], params["mo"],
+        wi, wc, Ki, Ko, params["Kbh"], params["Cbh"], params["c"]
+    )
     return result.t, dy
 
 
-def OuterDefect_bearing(fs=1e5, T=1):
-    filename = 'NUP205'
-    Ki, Ko = load_K(filename)
-    Nb = 13
-    mi = 5324.83e-9 * 7850
-    mo = 7664.64e-9 * 7850
-    Kbh = 1e7
-    Cbh = 1e3
-    Fr = 500
-    Rm = 19.5e-3
-    Rr = 3.75e-3
-    c = 1e-6
-    wi = 1000 / 60 * 2 * np.pi
-    wc = wi / 2 * (1 - Rr / Rm)
+def OuterDefect_bearing(fs=1e5, T=1, **kwargs):
+    # 默认参数
+    params = dict(
+        filename='NUP205',
+        Nb=13,
+        mi=5324.83e-9 * 7850,
+        mo=7664.64e-9 * 7850,
+        Kbh=1e7,
+        Cbh=1e3,
+        Fr=500,
+        RPM=1000,
+        Rm=19.5e-3,
+        Rr=3.75e-3,
+        c=1e-6,
+        B=0.2e-3,  # 默认故障
+        phi_oc=np.pi / 2  # 仅 0-pi 承载区域内生效
+    )
+    params.update(kwargs)
+    Ki, Ko = load_K(params["filename"])
+    wi = params['RPM'] / 60 * 2 * np.pi
+    wc = wi / 2 * (1 - params["Rr"] / params["Rm"])
     fs = int(fs)
     t_span = np.linspace(0, T, T * fs + 1)
     DOF = 4
     y0 = np.zeros(DOF * 2)
-    '''
-    基于动力学的滚动轴承多点故障建模及振动特性研究_李君飞.pdf --> page27
-    相较于健康工况，增加参数dC ，phi_do, phi_oc
-    '''
-    B = 0.2e-3  # 故障宽度 mm
-    Cd = Rr - np.sqrt(Rr ** 2 - (B / 2) ** 2)
-    Ro = Rm + Rr / 2
-    Co = Ro - np.sqrt(Ro ** 2 - (B / 2) ** 2)
-    dC = Cd - Co
-    phi_do = np.arcsin(B / 2 / Ro)
-    phi_oc = np.pi / 4 * 2
-    # 角度-外滚道故障位移激励测试
-    phi = np.linspace(0, 2 * np.pi, 1000)
-    Hdo = BearingModel.Hdo_calculate(phi, dC, phi_do, phi_oc)
-    plt.figure(1)
-    plt.plot(phi, Hdo)
-    plt.savefig(f"{filename}/{filename}_Hdo.png", dpi=300)
-    plt.xlabel('phi')
-    plt.close()
-    # def ode_system(t, y,
-    #                Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
-    #                dC=0, phi_do=0, phi_oc=0,
-    #                dCi=0, phi_di=0, phi_oci=0):
-    result = solve_ivp(BearingModel.ode_system, [0, T], y0, t_eval=t_span,
-                       args=(Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
-                             dC, phi_do, phi_oc))
-    dy = BearingModel.y_2_acc(result.t, result.y,
-                              Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
-                              dC, phi_do, phi_oc)
+    if params["B"] > 0:
+        Cd = params["Rr"] - np.sqrt(params["Rr"] ** 2 - (params["B"] / 2) ** 2)
+        Ro = params["Rm"] + params["Rr"] / 2
+        Co = Ro - np.sqrt(Ro ** 2 - (params["B"] / 2) ** 2)
+        dC = Cd - Co
+        phi_do = np.arcsin(params["B"] / 2 / Ro)
+    else:
+        dC = 0.0
+        phi_do = 0.0
+    # if dC != 0:
+    #     phi = np.linspace(0, 2 * np.pi, 1000)
+    #     Hdo = BearingModel.Hdo_calculate(phi, dC, phi_do, params["phi_oc"])
+    #     plt.figure(1)
+    #     plt.plot(phi, Hdo)
+    #     plt.savefig(f"{params['filename']}/{params['filename']}_Hdo.png", dpi=300)
+    #     plt.xlabel('phi')
+    #     plt.close()
+    result = solve_ivp(
+        BearingModel.ode_system,
+        [0, T], y0, t_eval=t_span,
+        args=(params["Fr"], params["Nb"], params["mi"], params["mo"],
+              wi, wc, Ki, Ko, params["Kbh"], params["Cbh"], params["c"],
+              dC, phi_do, params["phi_oc"])
+    )
+    dy = BearingModel.y_2_acc(
+        result.t, result.y,
+        params["Fr"], params["Nb"], params["mi"], params["mo"],
+        wi, wc, Ki, Ko, params["Kbh"], params["Cbh"], params["c"],
+        dC, phi_do, params["phi_oc"]
+    )
     return result.t, dy
 
 
-def InnerDefect_bearing(fs=1e5, T=1):
-    filename = 'NUP205'
-    Ki, Ko = load_K(filename)
-    Nb = 13
-    mi = 5324.83e-9 * 7850
-    mo = 7664.64e-9 * 7850
-    Kbh = 1e7
-    Cbh = 1e3
-    Fr = 500
-    Rm = 19.5e-3
-    Rr = 3.75e-3
-    c = 1e-6
-    wi = 1000 / 60 * 2 * np.pi
-    wc = wi / 2 * (1 - Rr / Rm)
+def InnerDefect_bearing(fs=1e5, T=1, **kwargs):
+    params = dict(
+        filename='NUP205',
+        Nb=13,
+        mi=5324.83e-9 * 7850,
+        mo=7664.64e-9 * 7850,
+        Kbh=1e7,
+        Cbh=1e3,
+        Fr=500,
+        RPM=1000,
+        Rm=19.5e-3,
+        Rr=3.75e-3,
+        c=1e-6,
+        B=0.1e-3,
+        phi_oci=0.0
+    )
+    params.update(kwargs)
+    Ki, Ko = load_K(params["filename"])
+    wi = params["RPM"] / 60 * 2 * np.pi
+    wc = wi / 2 * (1 - params["Rr"] / params["Rm"])
     fs = int(fs)
     t_span = np.linspace(0, T, T * fs + 1)
     DOF = 4
     y0 = np.zeros(DOF * 2)
-    '''
-    基于动力学的滚动轴承多点故障建模及振动特性研究_李君飞.pdf --> page27
-    相较于健康工况，增加参数dC ，phi_do, phi_oc
-    '''
-    B = 0.1e-3  # 故障宽度 mm
-    Cd = Rr - np.sqrt(Rr ** 2 - (B / 2) ** 2)
-    Ri = Rm - Rr / 2
-    Ci = Ri - np.sqrt(Ri ** 2 - (B / 2) ** 2)
-    dCi = Cd - Ci
-    phi_di = np.arcsin(B / 2 / Ri)
-    phi_oci = 0
-    # 角度-内滚道故障位移激励测试 @njit后类型警告，导致无法正确运行
-    # t_test = np.linspace(0, T, T * fs * 10 + 1)
-    # phi_i = t_test * wi + phi_oci
-    # phi_r = t_test * wc + 0
-    # Hdi = np.zeros_like(phi_i)
-    # for i in range(len(t_test)):
-    #     Hdi[i] = BearingModel.Hdi_calculate(np.mod(phi_r[i], 2 * np.pi), dCi, phi_di, np.mod(phi_i[i], 2 * np.pi))
-    # plt.figure(1)
-    # plt.plot(t_test, Hdi)
-    # plt.savefig(f"{filename}/{filename}_Hdi.png", dpi=300)
-    # plt.xlabel('t (s)')
-    # plt.ylabel('Hdi (mm)')
-    # plt.close()
-    # def ode_system(t, y,
-    #                Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
-    #                dC=0, phi_do=0, phi_oc=0,
-    #                dCi=0, phi_di=0, phi_oci=0):
-    result = solve_ivp(BearingModel.ode_system, [0, T], y0, t_eval=t_span,
-                       args=(Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
-                             0, 0, 0,
-                             dCi, phi_di, phi_oci))
-    dy = BearingModel.y_2_acc(result.t, result.y,
-                              Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
-                              0, 0, 0,
-                              dCi, phi_di, phi_oci)
+    if params["B"] > 0:
+        Cd = params["Rr"] - np.sqrt(params["Rr"] ** 2 - (params["B"] / 2) ** 2)
+        Ri = params["Rm"] - params["Rr"] / 2
+        Ci = Ri - np.sqrt(Ri ** 2 - (params["B"] / 2) ** 2)
+        dCi = Cd - Ci
+        phi_di = np.arcsin(params["B"] / 2 / Ri)
+    else:
+        dCi = 0.0
+        phi_di = 0.0
+    result = solve_ivp(
+        BearingModel.ode_system,
+        [0, T], y0, t_eval=t_span,
+        args=(params["Fr"], params["Nb"], params["mi"], params["mo"],
+              wi, wc, Ki, Ko, params["Kbh"], params["Cbh"], params["c"],
+              0, 0, 0,
+              dCi, phi_di, params["phi_oci"])
+    )
+    dy = BearingModel.y_2_acc(
+        result.t, result.y,
+        params["Fr"], params["Nb"], params["mi"], params["mo"],
+        wi, wc, Ki, Ko, params["Kbh"], params["Cbh"], params["c"],
+        0, 0, 0,
+        dCi, phi_di, params["phi_oci"]
+    )
     return result.t, dy
 
 
-def RollerDefect_bearing(fs=1e5, T=1):
-    filename = 'NUP205'
-    Ki, Ko = load_K(filename)
-    Nb = 13
-    mi = 5324.83e-9 * 7850
-    mo = 7664.64e-9 * 7850
-    Kbh = 1e7
-    Cbh = 1e3
-    Fr = 500
-    Rm = 19.5e-3
-    Rr = 3.75e-3
-    c = 1e-6
-    wi = 1000 / 60 * 2 * np.pi
-    wc = wi / 2 * (1 - Rr / Rm)
+def RollerDefect_bearing(fs=1e5, T=1, **kwargs):
+    params = dict(
+        filename='NUP205',
+        Nb=13,
+        mi=5324.83e-9 * 7850,
+        mo=7664.64e-9 * 7850,
+        Kbh=1e7,
+        Cbh=1e3,
+        Fr=500,
+        RPM=1000,
+        Rm=19.5e-3,
+        Rr=3.75e-3,
+        c=1e-6,
+        B=2e-3,
+        alpha_b=0.0,
+        j=1
+    )
+    params.update(kwargs)
+    Ki, Ko = load_K(params["filename"])
+    wi = params["RPM"] / 60 * 2 * np.pi
+    wc = wi / 2 * (1 - params["Rr"] / params["Rm"])
     fs = int(fs)
     t_span = np.linspace(0, T, T * fs + 1)
     DOF = 4
     y0 = np.zeros(DOF * 2)
-    '''
-    基于动力学仿真数据的双源域自适应滚动轴承故障诊断研究_梁栋.pdf
-    '''
-    B = 2e-3  # 故障宽度
-    phi_b = 2 * np.arcsin(B / 2 / Rr)
-    wr = wi * Rm / 2 / Rr * (1 - (Rr / Rm) ** 2)
-    Ro = Rm + Rr
-    Ri = Rm - Rr
-    Hbomax = Rr - np.sqrt(Rr ** 2 - (B / 2) ** 2) + Ro - np.sqrt(Ro ** 2 - (B / 2) ** 2)
-    Hbimax = Rr - np.sqrt(Rr ** 2 - (B / 2) ** 2) + Ri - np.sqrt(Ri ** 2 - (B / 2) ** 2)
-    alpha_b = 0
-    j = 1
-    # 自转-滚动体缺陷位移激励
-    Hdr = np.zeros(int(T * fs + 1))
-    beta = np.linspace(0, 4 * np.pi, int(T * fs + 1))
-    for i in range(len(beta)):
-        Hdr[i] = BearingModel.Hdr_calculate(np.mod(beta[i], 2 * np.pi), Hbomax, Hbimax, phi_b, j, Nb)[j - 1]
-    plt.figure()
-    plt.plot(beta, Hdr, label='Hdr')
-    plt.xlabel('self-rotational angel (rad)')
-    plt.xlim([0, 4 * np.pi])
-    plt.savefig(f"{filename}/{filename}_Hdr.png", dpi=300)
-    plt.close()
-    # def ode_system(t, y,
-    #                Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
-    #                dC=0, phi_do=0, phi_oc=0,
-    #                dCi=0, phi_di=0, phi_oci=0,
-    #                Hbomax=0, Hbimax=0, phi_b=0, wr=0, alpha_b=0, j=1):
-    result = solve_ivp(BearingModel.ode_system, [0, T], y0, t_eval=t_span,
-                       args=(Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
-                             0, 0, 0,
-                             0, 0, 0,
-                             Hbomax, Hbimax, phi_b, wr, alpha_b, j))
-    dy = BearingModel.y_2_acc(result.t, result.y,
-                              Fr, Nb, mi, mo, wi, wc, Ki, Ko, Kbh, Cbh, c,
-                              0, 0, 0,
-                              0, 0, 0,
-                              Hbomax, Hbimax, phi_b, wr, alpha_b, j)
+    if params["B"] > 0:
+        phi_b = 2 * np.arcsin(params["B"] / 2 / params["Rr"])
+        wr = wi * params["Rm"] / 2 / params["Rr"] * (1 - (params["Rr"] / params["Rm"]) ** 2)
+        Ro = params["Rm"] + params["Rr"]
+        Ri = params["Rm"] - params["Rr"]
+        Hbomax = params["Rr"] - np.sqrt(params["Rr"] ** 2 - (params["B"] / 2) ** 2) \
+                 + Ro - np.sqrt(Ro ** 2 - (params["B"] / 2) ** 2)
+        Hbimax = params["Rr"] - np.sqrt(params["Rr"] ** 2 - (params["B"] / 2) ** 2) \
+                 + Ri - np.sqrt(Ri ** 2 - (params["B"] / 2) ** 2)
+    else:
+        phi_b = 0.0
+        wr = 0.0
+        Hbomax = 0.0
+        Hbimax = 0.0
+    result = solve_ivp(
+        BearingModel.ode_system,
+        [0, T], y0, t_eval=t_span,
+        args=(params["Fr"], params["Nb"], params["mi"], params["mo"],
+              wi, wc, Ki, Ko, params["Kbh"], params["Cbh"], params["c"],
+              0, 0, 0,
+              0, 0, 0,
+              Hbomax, Hbimax, phi_b, wr, params["alpha_b"], params["j"])
+    )
+    dy = BearingModel.y_2_acc(
+        result.t, result.y,
+        params["Fr"], params["Nb"], params["mi"], params["mo"],
+        wi, wc, Ki, Ko, params["Kbh"], params["Cbh"], params["c"],
+        0, 0, 0,
+        0, 0, 0,
+        Hbomax, Hbimax, phi_b, wr, params["alpha_b"], params["j"]
+    )
     return result.t, dy
 
 
@@ -244,44 +253,42 @@ if __name__ == '__main__':
     fs = 1e5
     start = time.time()
     # 健康轴承 频率分量：fvc
-    # t, y = healthy_bearing(fs=fs, T=T)
-    # index = 11  # 5
-    # signal = y[index, int(0.2 * fs):]
-    # dynamics_plot.plt_time_domain(signal, fs, show=False, xlim=0.055,
-    #                               img_save_path='NUP205/healthy_t.png', title='Healthy Bearing')
-    # dynamics_plot.plt_envelope_spectrum(signal, fs, show=False, xlim=500,
-    #                                     img_save_path='NUP205/healthy_f.png', title='Healthy Bearing')
-
-    # 外圈故障 频率分量：n * fbpfo
-    # t, y = OuterDefect_bearing(fs=fs, T=T)
-    # index = 11  # 5
-    # signal = y[index, int(0.2 * fs):]
-    # dynamics_plot.plt_time_domain(signal, fs, show=False, xlim=0.055,
-    #                               img_save_path='NUP205/outerdefect_t.png', title='Outer Raceway Defected Bearing')
-    # dynamics_plot.plt_envelope_spectrum(signal, fs, show=False, xlim=500,
-    #                                     img_save_path='NUP205/outerdefect_f.png',
-    #                                     title='Outer Raceway Defected Bearing')
+    t, y = healthy_bearing(fs=fs, T=T)
+    index = 11  # 5
+    signal = y[index, int(0.2 * fs):]
+    dynamics_plot.plt_time_domain(signal, fs, show=False, xlim=0.055,
+                                  img_save_path='NUP205/healthy_t.png', title='Healthy Bearing')
+    dynamics_plot.plt_envelope_spectrum(signal, fs, show=False, xlim=500,
+                                        img_save_path='NUP205/healthy_f.png', title='Healthy Bearing')
+    # 外圈缺陷
+    t, dy = OuterDefect_bearing(fs=fs, T=T, B=0.2e-3)
+    index = 11  # 5L
+    signal = dy[index, int(0.2 * fs):]
+    dynamics_plot.plt_time_domain(signal, fs, show=False, xlim=0.055,
+                                  img_save_path='NUP205/outerdefect_t.png', title='Outer Raceway Defected Bearing')
+    dynamics_plot.plt_envelope_spectrum(signal, fs, show=False, xlim=500,
+                                        img_save_path='NUP205/outerdefect_f.png',
+                                        title='Outer Raceway Defected Bearing')
 
     # 内圈故障 频率分量：n * fi, n * fbpfi +- m * fi
-    # t, y = InnerDefect_bearing(fs=fs, T=T)
-    # index = 11  # 5
-    # signal = y[index, int(0.2 * fs):]
-    # dynamics_plot.plt_time_domain(signal, fs, show=False, xlim=0.31,
-    #                               img_save_path='NUP205/innerdefect_t.png', title='Inner Raceway Defected Bearing')
-    # dynamics_plot.plt_envelope_spectrum(signal, fs, show=False, xlim=500,
-    #                                     img_save_path='NUP205/innerdefect_f.png',
-    #                                     title='Inner Raceway Defected Bearing')
+    t, y = InnerDefect_bearing(fs=fs, T=T)
+    index = 11  # 5
+    signal = y[index, int(0.2 * fs):]
+    dynamics_plot.plt_time_domain(signal, fs, show=False, xlim=0.31,
+                                  img_save_path='NUP205/innerdefect_t.png', title='Inner Raceway Defected Bearing')
+    dynamics_plot.plt_envelope_spectrum(signal, fs, show=False, xlim=500,
+                                        img_save_path='NUP205/innerdefect_f.png',
+                                        title='Inner Raceway Defected Bearing')
 
     # 滚动体故障 频率分量：n * fc, n * fbsf +- m * fc
-    # t, y = RollerDefect_bearing(fs=fs, T=T)
-    RollerDefect_bearing(fs=fs, T=T)
+    t, y = RollerDefect_bearing(fs=fs, T=T)
     index = 11  # 5
-    # signal = y[index, int(0.2 * fs):]
-    # dynamics_plot.plt_time_domain(signal, fs, show=False, xlim=0.31,
-    #                               img_save_path='NUP205/rollerdefect_t.png', title='Roller Defected Bearing')
-    # dynamics_plot.plt_envelope_spectrum(signal, fs, show=False, xlim=500,
-    #                                     img_save_path='NUP205/rollerdefect_f.png',
-    #                                     title='Roller Defected Bearing')
+    signal = y[index, int(0.2 * fs):]
+    dynamics_plot.plt_time_domain(signal, fs, show=False, xlim=0.31,
+                                  img_save_path='NUP205/rollerdefect_t.png', title='Roller Defected Bearing')
+    dynamics_plot.plt_envelope_spectrum(signal, fs, show=False, xlim=500,
+                                        img_save_path='NUP205/rollerdefect_f.png',
+                                        title='Roller Defected Bearing')
 
     end = time.time()
     elapsed = end - start  # 秒
