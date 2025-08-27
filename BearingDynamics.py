@@ -18,7 +18,7 @@ def load_K(filename):
     return ki, ko
 
 
-def Dynamics_bearing(fs=1e5, T=1, **kwargs):
+def get_params_NUP205():
     params = dict(
         filename='NUP205',
         Nb=13,
@@ -30,6 +30,40 @@ def Dynamics_bearing(fs=1e5, T=1, **kwargs):
         RPM=1000,
         Rm=19.5e-3,
         Rr=3.75e-3,
+        c=1e-6,
+    )
+    return params
+
+
+def get_params_NJ208():
+    params = dict(
+        filename='NJ208',
+        Nb=14,
+        mi=12979.79e-9 * 7850,
+        mo=21201.94e-9 * 7850,
+        Kbh=1e7,
+        Cbh=1e3,
+        Fr=500,
+        RPM=1000,
+        Rm=30.25e-3,
+        Rr=5.5e-3,
+        c=20e-6,
+    )
+    return params
+
+
+def Dynamics_bearing(fs=1e5, T=1, **kwargs):
+    params = dict(
+        filename='NJ208',
+        Nb=14,
+        mi=12979.79e-9 * 7850 + 5,
+        mo=21201.94e-9 * 7850 + 5,
+        Kbh=1e7,
+        Cbh=1e3,
+        Fr=500,
+        RPM=1000,
+        Rm=30.25e-3,
+        Rr=5.5e-3,
         c=1e-6,
         # 外滚道缺陷
         Bo=0,
@@ -112,15 +146,15 @@ if __name__ == '__main__':
     T = 2
     fs = 1e5
     start = time.time()
-    filename = 'NUP205'
+    filename = 'NJ208'
     # 计算
-    # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename)   # 健康
-    # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename, Bo=0.1e-3, phi_oc=np.pi / 2)    # 外
-    # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename, Bi=0.1e-3, phi_oci=0)    # 内
-    # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename, Br=2e-3, alpha_b=0, j=1)    # 滚
-    t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename,
-                                   Bo=0.1e-3, phi_oc=np.pi / 2,
-                                   Bi=0.1e-3, phi_oci=0)    # 外+内复合
+    # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename) # 健康
+    t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename, Bo=0.2e-3, phi_oc=np.pi / 2)  # 外
+    # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename, Bi=0.1e-3, phi_oci=0)  # 内
+    # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename, Br=2e-3, alpha_b=0, j=1) # 滚
+    # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename,
+    #                                Bo=0.1e-3, phi_oc=np.pi / 2,
+    #                                Bi=0.1e-3, phi_oci=0)  # 外+内复合
     model = '_'.join(model)
     index = 11  # 5
     signal = y[index, int(0.2 * fs):]
