@@ -4,17 +4,26 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b08b0994-9ff1-45cc-8a33-79a7c504c522" name="更改" comment="统一参数输入,NJ208添加">
+    <list default="true" id="b08b0994-9ff1-45cc-8a33-79a7c504c522" name="更改" comment="NJ208, and data saved.">
+      <change afterPath="$PROJECT_DIR$/NJ208/DATA_InnerDefect.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/NJ208/DATA_OuterDefect.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/NJ208/DATA_RollerDefect.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/NJ208/DATA_health.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/UpdateLog.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/BearingDynamics.py" beforeDir="false" afterPath="$PROJECT_DIR$/BearingDynamics.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NJ208/DATA_OuterDefect_InnerDefect.csv" beforeDir="false" afterPath="$PROJECT_DIR$/NJ208/DATA_OuterDefect_InnerDefect.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/NJ208/InnerDefect_f.png" beforeDir="false" afterPath="$PROJECT_DIR$/NJ208/InnerDefect_f.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/NJ208/InnerDefect_t.png" beforeDir="false" afterPath="$PROJECT_DIR$/NJ208/InnerDefect_t.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NJ208/OuterDefect_InnerDefect_f.png" beforeDir="false" afterPath="$PROJECT_DIR$/NJ208/OuterDefect_InnerDefect_f.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NJ208/OuterDefect_InnerDefect_t.png" beforeDir="false" afterPath="$PROJECT_DIR$/NJ208/OuterDefect_InnerDefect_t.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/NJ208/OuterDefect_f.png" beforeDir="false" afterPath="$PROJECT_DIR$/NJ208/OuterDefect_f.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/NJ208/OuterDefect_t.png" beforeDir="false" afterPath="$PROJECT_DIR$/NJ208/OuterDefect_t.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/NJ208/RollerDefect_f.png" beforeDir="false" afterPath="$PROJECT_DIR$/NJ208/RollerDefect_f.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/NJ208/RollerDefect_t.png" beforeDir="false" afterPath="$PROJECT_DIR$/NJ208/RollerDefect_t.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/NJ208/health_f.png" beforeDir="false" afterPath="$PROJECT_DIR$/NJ208/health_f.png" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/NJ208/health_t.png" beforeDir="false" afterPath="$PROJECT_DIR$/NJ208/health_t.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -244,7 +253,8 @@
       <workItem from="1756197714372" duration="8157000" />
       <workItem from="1756271730715" duration="6229000" />
       <workItem from="1756278012513" duration="4852000" />
-      <workItem from="1756283600421" duration="776000" />
+      <workItem from="1756283600421" duration="885000" />
+      <workItem from="1756303742490" duration="3504000" />
     </task>
     <task id="LOCAL-00001" summary="健康NUP205">
       <option name="closed" value="true" />
@@ -382,7 +392,23 @@
       <option name="project" value="LOCAL" />
       <updated>1756283336865</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="NJ208, and data saved.">
+      <option name="closed" value="true" />
+      <created>1756284447122</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1756284447122</updated>
+    </task>
+    <task id="LOCAL-00019" summary="NJ208, and data saved.">
+      <option name="closed" value="true" />
+      <created>1756284453233</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1756284453233</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -412,11 +438,12 @@
     <MESSAGE value="统一参数输入" />
     <MESSAGE value="统一参数输入,复合故障测试" />
     <MESSAGE value="统一参数输入,NJ208添加" />
-    <option name="LAST_COMMIT_MESSAGE" value="统一参数输入,NJ208添加" />
+    <MESSAGE value="NJ208, and data saved." />
+    <option name="LAST_COMMIT_MESSAGE" value="NJ208, and data saved." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/BearingModel$BearingDynamic.coverage" NAME="BearingDynamic 覆盖结果" MODIFIED="1755498884596" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/DefectBearingDynamics$BearingDynamics.coverage" NAME="BearingDynamics 覆盖结果" MODIFIED="1756284357245" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/DefectBearingDynamics$BearingDynamics.coverage" NAME="BearingDynamics 覆盖结果" MODIFIED="1756305982970" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/DefectBearingDynamics$Test__1_.coverage" NAME="Test (1) 覆盖结果" MODIFIED="1756276840551" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/DefectBearingDynamics$BearingModel.coverage" NAME="BearingModel 覆盖结果" MODIFIED="1756274231229" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/BearingModel$KeyStiffnesses.coverage" NAME="KeyStiffnesses 覆盖结果" MODIFIED="1755489913157" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

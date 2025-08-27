@@ -18,63 +18,29 @@ def load_K(filename):
     return ki, ko
 
 
-def get_params_NUP205():
-    params = dict(
-        filename='NUP205',
-        Nb=13,
-        mi=5324.83e-9 * 7850,
-        mo=7664.64e-9 * 7850,
-        Kbh=1e7,
-        Cbh=1e3,
-        Fr=500,
-        RPM=1000,
-        Rm=19.5e-3,
-        Rr=3.75e-3,
-        c=1e-6,
-    )
-    return params
-
-
-def get_params_NJ208():
-    params = dict(
-        filename='NJ208',
-        Nb=14,
-        mi=12979.79e-9 * 7850,
-        mo=21201.94e-9 * 7850,
-        Kbh=1e7,
-        Cbh=1e3,
-        Fr=500,
-        RPM=1000,
-        Rm=30.25e-3,
-        Rr=5.5e-3,
-        c=20e-6,
-    )
-    return params
-
-
 def Dynamics_bearing(fs=1e5, T=1, **kwargs):
     params = dict(
         filename='NJ208',
-        Nb=14,
-        mi=12979.79e-9 * 7850,
-        mo=21201.94e-9 * 7850,
-        Kbh=1e7,
-        Cbh=1e3,
-        Fr=500,
-        RPM=1000,
-        Rm=30.25e-3,
-        Rr=5.5e-3,
-        c=1e-6,
+        Nb=14, # 滚动体数目
+        mi=15, # 内圈部分质量
+        mo=6, # 外圈部分质量
+        Kbh=1e7, # 外圈接地刚度
+        Cbh=1e3, # 外圈接地阻尼
+        Fr=400, # 内圈所受径向载荷
+        RPM=400, # 内圈转速
+        Rm=30.25e-3, # 轴承节圆半径
+        Rr=5.5e-3, # 滚动体半径
+        c=20e-6, # 轴承径向游隙
         # 外滚道缺陷
-        Bo=0,
-        phi_oc=0,
+        Bo=0, # 故障宽度
+        phi_oc=0, # 故障中心角度，0-pi内为承载区
         # 内滚道缺陷
-        Bi=0,
-        phi_oci=0,
+        Bi=0, # 内圈故障宽度
+        phi_oci=0,# 故障中心角度
         # 滚动体缺陷
-        Br=0,
-        alpha_b=0.0,
-        j=1
+        Br=0, # 滚动体故障宽度
+        alpha_b=0.0, # 滚动体故障中心与径向方向夹角
+        j=1, # 故障滚动体编号
     )
     model = []
     params.update(kwargs)
@@ -139,27 +105,36 @@ def Dynamics_bearing(fs=1e5, T=1, **kwargs):
     )
     if not model:
         model = ['health']
+    model = '_'.join(model)
     return result.t, dy, model
 
 
 if __name__ == '__main__':
     matplotlib.use('TkAgg')
-    T = 2
+    # 仿真时间，采样频率
+    T = 5
     fs = 1e5
     start = time.time()
     filename = 'NJ208'
     # 计算
+    '''
+    示例(故障设置参数可留空)：
+    t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename,
+                                   W=400, RPM=400, # 载荷设置
+                                   Bo=0.2e-3, phi_oc=np.pi / 2, # 外圈故障参数
+                                   Bi=0.2e-3, phi_oci=0, # 内圈故障参数
+                                   Br=0.2e-3, alpha_b=0.0, j=1) # 滚动体故障参数
+    '''
     # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename) # 健康
     # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename, Bo=0.2e-3, phi_oc=np.pi / 2)  # 外
     # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename, Bi=0.2e-3, phi_oci=0)  # 内
     # t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename, Br=0.2e-3, alpha_b=0, j=1) # 滚
     t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename,
-                                   Bo=0.1e-3, phi_oc=np.pi / 2,
-                                   Bi=0.1e-3, phi_oci=0)  # 外+内复合
-    model = '_'.join(model)
+                                   Bo=0.2e-3, phi_oc=np.pi / 2,
+                                   Bi=0.2e-3, phi_oci=0)  # 外+内复合
     index = 11  # 5
-    signal = y[index, int(0.2 * fs):]
-    dynamics_plot.plt_time_domain(signal, fs, show=False, xlim=0.31,
+    signal = y[index, int(1 * fs):]
+    dynamics_plot.plt_time_domain(signal, fs, show=False, xlim=0.5,
                                   img_save_path=f"{filename}/{model}_t.png",
                                   title=model)
     dynamics_plot.plt_envelope_spectrum(signal, fs, show=False, xlim=500,
@@ -171,7 +146,7 @@ if __name__ == '__main__':
     minutes = int(elapsed // 60)
     seconds = elapsed % 60
     print(f"运行时间: {minutes} 分 {seconds:.2f} 秒")
-    data = pandas.DataFrame(y[8:12, int(0.2 * fs):])
+    data = pandas.DataFrame(y[10:12, int(1 * fs):int(2 * fs + 1)])
     data.to_csv(f"{filename}/DATA_{model}.csv", index=False, header=False)
     # 每一行分别为xi,yi,xo,yo通道的振动加速度
     print(f'数据保存至{filename}下对应csv文件')
