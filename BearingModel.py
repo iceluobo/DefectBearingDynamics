@@ -74,9 +74,9 @@ def Hdi_calculate(phi, dCi, phi_di, phi_id):
 def Hdr_calculate(beta, Hbomax, Hbimax, phi_b, j, Nb):
     Hdr = np.zeros(Nb)
     if np.abs(beta) <= phi_b:
-        Hdr[j - 1] = Hbomax
+        Hdr[j - 1] = Hbomax * 0.5 * (1 + np.cos(pi * (beta - phi_b / 2) / phi_b*2))
     elif np.abs(beta - pi) <= phi_b:
-        Hdr[j - 1] = Hbimax
+        Hdr[j - 1] = Hbimax * 0.5 * (1 + np.cos(np.pi * (beta - np.pi) / phi_b))
     return Hdr
 
 
