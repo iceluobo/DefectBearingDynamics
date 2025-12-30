@@ -12,7 +12,7 @@
 初次运行需要安装依赖库。
 
 ```shell
-    pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ## 程序运行
