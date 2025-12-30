@@ -47,3 +47,30 @@ t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename,
 ***BearingModel.py*** 动力学方程定义，中间量计算函数。
 
 ***dynamics_plot.py*** 绘图依赖。
+
+## 结果分析
+### 健康轴承
+包络谱主要频率分量为轴转频 $f_\text{i}$ 和 轴承变柔度频率 $f_\text{vc}$ ，变柔度频率在数值上等于外圈故障特征频率 $f_\text{bpfo}$ 。
+![健康轴承-时域信号](NJ208/health_t.png "健康轴承 时域信号")
+![健康轴承-包络谱](NJ208/health_f.png "健康轴承 包络谱")
+
+### 外圈故障
+包络谱主要频率分量为外圈故障特征频率 $f_\text{bpfo}$ 。
+![外圈故障轴承-时域信号](NJ208/OuterDefect_t.png "外圈故障轴承 时域信号")
+![外圈故障轴承-包络谱](NJ208/OuterDefect_f.png "外圈故障轴承 包络谱")
+
+### 内圈故障
+包络谱主要频率分量为轴转频 $f_\text{i}$ 和 内圈故障特征频率 $f_\text{bpfi}$ 。
+![内圈故障轴承-时域信号](NJ208/InnerDefect_t.png "内圈故障轴承 时域信号")
+![内圈故障轴承-包络谱](NJ208/InnerDefect_f.png "内圈故障轴承 包络谱")
+### 滚动体故障
+包络谱主要频率分量为保持架转频 $f_\text{c}$ 和 滚动体故障特征频率 $f_\text{bpfo}$ 。
+![滚动体故障轴承-时域信号](NJ208/RollerDefect_t.png "滚动体故障轴承 时域信号")
+![滚动体故障轴承-包络谱](NJ208/RollerDefect_f.png "滚动体故障轴承 包络谱")
+
+### 内外圈复合故障
+内外圈故障特征频率均具备，且外圈故障特征更加显著。其他复合故障这里省略。
+![滚动体故障轴承-时域信号](NJ208/OuterDefect_InnerDefect_t.png "内外圈复合故障轴承 时域信号")
+![滚动体故障轴承-包络谱](NJ208/OuterDefect_InnerDefect_f.png "内外圈复合故障轴承 包络谱")
+
+
