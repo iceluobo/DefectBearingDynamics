@@ -17,7 +17,7 @@ pip install -r requirements.txt
 
 ## 程序运行
 
-运行 ***BearingDynamics.py*** 中的 Dynamics_bearing函数进行轴承动力学模型求解。示例如下：
+运行 ***BearingDynamics.py*** 中的 Dynamics_bearing函数进行轴承动力学模型求解。示例如下： 
 
 ```python
 t, y, model = Dynamics_bearing(fs=fs, T=T, filename=filename,
