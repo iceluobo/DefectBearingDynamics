@@ -2,12 +2,17 @@
 
 求解外滚道缺陷、内滚道缺陷、滚动体缺陷，以及耦合故障条件下，轴承的动力学响应，并保存时域图，包络谱，以及振动加速度数据。
 
+## About us
+```aiignore
+    https://mcd.suda.edu.cn/
+```
+
 ## 依赖库
 
 初次运行需要安装依赖库。
 
 ```shell
-pip install -r requirements.txt
+    pip install -r requirements.txt
 ```
 
 ## 程序运行
